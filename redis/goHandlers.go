@@ -98,3 +98,27 @@ func GetPopular(x int) ([]*Video , error){
 		return videos, nil
 	}
 }
+
+// Log time spent starting up, retrieving events, 
+// retrieving redis values, and producing events
+
+// Create Topics in Kafka (InboundTopic and OutboundTopic)
+func CreateTopics(topics []string) error{
+}
+
+// Put InboundTopic
+
+// Get OutboundTopic
+
+// Put OutboundTopic
+
+// Get InboundTopic
+
+// Get Messages from Topic in Kafka
+func GetMessages(topic string) error{
+}
+
+// Get Redis Value and Perform a Computation on it
+func GetAndComputeRedisValue(value string) error{
+	// Compute value
+}
