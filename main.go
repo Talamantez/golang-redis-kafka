@@ -17,7 +17,7 @@ import (
 func main() {
 	if len(os.Args) > 2{
 		if os.Args[1] == "populate"{
-			// defer timeTrack(time.Now(), "populate")
+			defer timeTrack(time.Now(), "populate")
 			numRecords,err := strconv.Atoi(os.Args[2])
 			if err!=nil{
 				fmt.Println( "Could not convert arguments provided, hence creating four entries")
