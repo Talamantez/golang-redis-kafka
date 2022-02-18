@@ -11,6 +11,7 @@ import (
 	"video-feed/kafka"
 	"video-feed/redis"
 	"video-feed/util"
+	"time"
 )
 
 func main() {
