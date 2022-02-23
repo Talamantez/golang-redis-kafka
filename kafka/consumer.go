@@ -72,8 +72,11 @@ func emitToRedis(topic string, value string) {
 		log := zerolog.New(os.Stdout).With().
 			Timestamp().
 			Str("app", "KafRedigo").Dur("Duration", duration).
-			Logger()
-		log.Printf("Set %v topic in redis to '%v'", topic, value)
+			Logger().Output(zerolog.ConsoleWriter{Out: os.Stderr})
+
+		log.Info().Str(topic, value).Msg("Set topic in redis")
+		log.Info().Msg("Updated Redis")
+
 	}
 }
 func readFromRedis(topic string) (string, error) {
@@ -89,7 +92,7 @@ func readFromRedis(topic string) (string, error) {
 	log := zerolog.New(os.Stdout).With().Dur("Duration", diff).
 		Timestamp().
 		Str("app", "KafRedigo").
-		Logger()
+		Logger().Output(zerolog.ConsoleWriter{Out: os.Stderr})
 	log.Print("Read from Redis")
 	return result, nil
 }
@@ -112,7 +115,7 @@ func produceOutboundTopic(str string) {
 	log := zerolog.New(os.Stdout).With().Dur("Duration", diff).
 		Timestamp().
 		Str("app", "KafRedigo").
-		Logger()
+		Logger().Output(zerolog.ConsoleWriter{Out: os.Stderr})
 	log.Print("Produced to OutboundTopic Topic")
 }
 func saveRedisTriggerOutboundTopicKafka(topic string, value string) error {

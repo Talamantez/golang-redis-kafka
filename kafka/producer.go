@@ -51,7 +51,7 @@ func Produce(topic string, value string) {
 		log := zerolog.New(os.Stdout).With().
 			Timestamp().
 			Str("app", "KafRedigo").Dur("Duration", duration).
-			Logger()
+			Logger().Output(zerolog.ConsoleWriter{Out: os.Stderr})
 		log.Printf("Produced %s [%d] at offset %v",
 			*m.TopicPartition.Topic, m.TopicPartition.Partition, m.TopicPartition.Offset)
 	}

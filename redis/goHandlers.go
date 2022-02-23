@@ -25,7 +25,7 @@ func SetRedisTopic(topic string, message string) error {
 	log := zerolog.New(os.Stdout).With().Dur("Duration", diff).
 		Timestamp().
 		Str("app", "KafRedigo").
-		Logger()
+		Logger().Output(zerolog.ConsoleWriter{Out: os.Stderr})
 	log.Print("Read from Redis")
 	return nil
 }
