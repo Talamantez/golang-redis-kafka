@@ -8,31 +8,28 @@ import (
 	"video-feed/redis"
 
 	"github.com/gorilla/mux"
+	"github.com/gyozatech/noodlog"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 )
 
-// var log *noodlog.Logger
+var nlog *noodlog.Logger
 
-// func init() {
-// 	log = noodlog.NewLogger().SetConfigs(
-// 		noodlog.Configs{
-// 			LogLevel:             noodlog.LevelTrace,
-// 			JSONPrettyPrint:      noodlog.Enable,
-// 			TraceCaller:          noodlog.Enable,
-// 			Colors:               noodlog.Enable,
-// 			CustomColors:         &noodlog.CustomColors{Trace: noodlog.Cyan},
-// 			ObscureSensitiveData: noodlog.Enable,
-// 			SensitiveParams:      []string{"password"},
-// 		},
-// 	)
-// }
+func init() {
+	nlog = noodlog.NewLogger().SetConfigs(
+		noodlog.Configs{
+			LogLevel:             noodlog.LevelTrace,
+			JSONPrettyPrint:      noodlog.Enable,
+			TraceCaller:          noodlog.Enable,
+			Colors:               noodlog.Enable,
+			CustomColors:         &noodlog.CustomColors{Trace: noodlog.Cyan},
+			ObscureSensitiveData: noodlog.Enable,
+			SensitiveParams:      []string{"password"},
+		},
+	)
+}
 
 func launchServer() error {
-	// noodlog
-	// log.Trace("Launching server")
-
-	// overlog
 	err := http.ListenAndServe(":4015", nil)
 	if err != nil {
 		fmt.Printf("Server error %v :", err)
@@ -42,9 +39,13 @@ func launchServer() error {
 }
 
 func main() {
+	zerolog.TimeFieldFormat = zerolog.TimeFormatUnix
 	log.Logger = log.Output(zerolog.ConsoleWriter{Out: os.Stderr})
 
-	log.Info().Str("foo", "bar").Msg("Hello world")
+	log.Info().Msg("Running App")
+	nlog.Trace("Running App")
+	log.Info().Msg("Localhost Endpoint: {your port}/produce-to-incoming-topic?message={your message}")
+	nlog.Trace("Localhost Endpoint: {your port}/produce-to-incoming-topic?message={your message}")
 
 	router := mux.NewRouter()
 
@@ -55,7 +56,6 @@ func main() {
 	redis.Init()
 	go kafka.InitProducer()
 	go kafka.Consumer([]string{"InboundTopic", "OutboundTopic"})
-	zerolog.TimeFieldFormat = zerolog.TimeFormatUnix
 
 	launchServer()
 }

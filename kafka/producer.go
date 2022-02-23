@@ -5,9 +5,12 @@ import (
 	"time"
 
 	"github.com/confluentinc/confluent-kafka-go/kafka"
+	"github.com/gyozatech/noodlog"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 )
+
+var nlog *noodlog.Logger
 
 var producer *kafka.Producer
 
@@ -25,6 +28,19 @@ func InitProducer() {
 
 	// log.Printf("Created Producer %v", producer)
 
+}
+func init() {
+	nlog = noodlog.NewLogger().SetConfigs(
+		noodlog.Configs{
+			LogLevel:             noodlog.LevelTrace,
+			JSONPrettyPrint:      noodlog.Enable,
+			TraceCaller:          noodlog.Enable,
+			Colors:               noodlog.Enable,
+			CustomColors:         &noodlog.CustomColors{Trace: noodlog.Cyan},
+			ObscureSensitiveData: noodlog.Enable,
+			SensitiveParams:      []string{"password"},
+		},
+	)
 }
 
 func Produce(topic string, value string) {
@@ -52,8 +68,10 @@ func Produce(topic string, value string) {
 			Timestamp().
 			Str("app", "KafRedigo").Dur("Duration", duration).
 			Logger().Output(zerolog.ConsoleWriter{Out: os.Stderr})
+
 		log.Printf("Produced %s [%d] at offset %v",
 			*m.TopicPartition.Topic, m.TopicPartition.Partition, m.TopicPartition.Offset)
+		nlog.Trace("Successfully Produced")
 	}
 	if err != nil {
 		log.Printf("Error in writing value : %v ", err)

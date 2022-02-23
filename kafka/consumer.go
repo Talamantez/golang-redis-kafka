@@ -10,9 +10,24 @@ import (
 	"video-feed/redis"
 
 	"github.com/confluentinc/confluent-kafka-go/kafka"
+	"github.com/gyozatech/noodlog"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 )
+
+func init() {
+	nlog = noodlog.NewLogger().SetConfigs(
+		noodlog.Configs{
+			LogLevel:             noodlog.LevelTrace,
+			JSONPrettyPrint:      noodlog.Enable,
+			TraceCaller:          noodlog.Enable,
+			Colors:               noodlog.Enable,
+			CustomColors:         &noodlog.CustomColors{Trace: noodlog.Cyan},
+			ObscureSensitiveData: noodlog.Enable,
+			SensitiveParams:      []string{"password"},
+		},
+	)
+}
 
 func Consumer(topics []string) {
 	zerolog.TimeFieldFormat = zerolog.TimeFormatUnix
@@ -74,8 +89,8 @@ func emitToRedis(topic string, value string) {
 			Str("app", "KafRedigo").Dur("Duration", duration).
 			Logger().Output(zerolog.ConsoleWriter{Out: os.Stderr})
 
-		log.Info().Str(topic, value).Msg("Set topic in redis")
-		log.Info().Msg("Updated Redis")
+		log.Info().Str(topic, value).Msg("Successfully set topic in redis")
+		nlog.Trace("Successfully set topic in redis")
 
 	}
 }
@@ -93,7 +108,9 @@ func readFromRedis(topic string) (string, error) {
 		Timestamp().
 		Str("app", "KafRedigo").
 		Logger().Output(zerolog.ConsoleWriter{Out: os.Stderr})
-	log.Print("Read from Redis")
+	log.Print("Successfully read from Redis")
+	nlog.Trace("Successfully read from Redis")
+
 	return result, nil
 }
 func reverseString(str string) (string, error) {
@@ -117,6 +134,7 @@ func produceOutboundTopic(str string) {
 		Str("app", "KafRedigo").
 		Logger().Output(zerolog.ConsoleWriter{Out: os.Stderr})
 	log.Print("Produced to OutboundTopic Topic")
+	nlog.Trace("Produced to OutboundTopic Topic")
 }
 func saveRedisTriggerOutboundTopicKafka(topic string, value string) error {
 	// save topic to redis
