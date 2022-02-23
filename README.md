@@ -1,7 +1,3 @@
-# video-feed
-Integrated Go Application with a simple server that serves sample video data for starters in kafka-redis-go.  
-
-
 ### To Run
 * Follow  https://kafka.apache.org/documentation/ to setup a kafka cluster
 * Follow  https://docs.confluent.io/current/clients/go.html for go client info
