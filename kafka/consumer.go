@@ -61,7 +61,6 @@ func Consumer(topics []string) {
 		}
 	}
 }
-
 func emitToRedis(topic string, value string) {
 	start := time.Now()
 	err := redis.SetRedisTopic(topic, value)
@@ -103,7 +102,6 @@ func reverseString(str string) (string, error) {
 	result := string(rev)
 	return result, nil
 }
-
 func produceOutboundTopic(str string) {
 	startTime := time.Now()
 	Produce("OutboundTopic", str)
