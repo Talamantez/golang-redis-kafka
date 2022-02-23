@@ -3,29 +3,61 @@ package main
 import (
 	"fmt"
 	"net/http"
-	"time"
 	"video-feed/kafka"
 	"video-feed/redis"
 
 	"github.com/gorilla/mux"
+	"github.com/gyozatech/noodlog"
 	"github.com/rs/zerolog"
 )
 
-func launchServer() error {
-	start := time.Now()
+var log *noodlog.Logger
 
-	err := http.ListenAndServe(":4002", nil)
+func init() {
+	log = noodlog.NewLogger().SetConfigs(
+		noodlog.Configs{
+			LogLevel:             noodlog.LevelTrace,
+			JSONPrettyPrint:      noodlog.Enable,
+			TraceCaller:          noodlog.Enable,
+			Colors:               noodlog.Enable,
+			CustomColors:         &noodlog.CustomColors{Trace: noodlog.Cyan},
+			ObscureSensitiveData: noodlog.Enable,
+			SensitiveParams:      []string{"password"},
+		},
+	)
+}
+
+func launchServer() error {
+
+	err := http.ListenAndServe(":4014", nil)
 	if err != nil {
 		fmt.Printf("Server error %v :", err)
 	}
-	end := time.Now()
-	duration := end.Sub(start)
-	fmt.Println(duration)
+
 	return nil
 }
 
 func main() {
+	// simple string message (with custom color)
+	log.Trace("Hello world!")
 
+	// chaining elements
+	log.Info("You've reached", 3, "login attemps")
+
+	// using string formatting
+	log.Warn("You have %d attempts left", 2)
+
+	// logging a struct with a JSON
+	log.Error(struct {
+		Code  int
+		Error string
+	}{500, "Generic Error"})
+
+	// logging a raw JSON string with a JSON (with obscuring "password")
+	log.Info(`{"username": "gyozatech", "password": "Gy0zApAssw0rd"}`)
+
+	// logging a JSON string with a JSON (with obscuring "password")
+	log.Info("{\"username\": \"nooduser\", \"password\": \"N0oDPasSw0rD\"}")
 	router := mux.NewRouter()
 
 	router.HandleFunc("/produce-to-incoming-topic", ProduceToIncomingTopic)

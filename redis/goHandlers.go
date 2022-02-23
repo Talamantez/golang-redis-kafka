@@ -1,10 +1,15 @@
 package redis
 
 import (
+	"os"
+	"time"
+
 	"github.com/gomodule/redigo/redis"
+	"github.com/rs/zerolog"
 )
 
 func SetRedisTopic(topic string, message string) error {
+	startTime := time.Now()
 	conn := Pool.Get()
 	defer conn.Close()
 	key := topic
@@ -13,6 +18,15 @@ func SetRedisTopic(topic string, message string) error {
 	if err != nil {
 		return err
 	}
+	endTime := time.Now()
+
+	diff := endTime.Sub(startTime)
+
+	log := zerolog.New(os.Stdout).With().Dur("Duration", diff).
+		Timestamp().
+		Str("app", "KafRedigo").
+		Logger()
+	log.Print("Read from Redis")
 	return nil
 }
 
@@ -21,7 +35,7 @@ func GetRedisTopic(topic string) (string, error) {
 	defer conn.Close()
 	message, err := redis.String(conn.Do("GET", topic))
 	if err != nil {
-		return "BLOOB", err
+		return "", err
 	}
 	return message, nil
 }
