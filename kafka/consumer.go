@@ -6,17 +6,13 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
-	"time"
 	"video-feed/redis"
 
 	"github.com/confluentinc/confluent-kafka-go/kafka"
-	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 )
 
 func Consumer(topics []string) {
-	zerolog.TimeFieldFormat = zerolog.TimeFormatUnix
-
 	group := "InboundTopic"
 	sigchan := make(chan os.Signal, 1)
 	signal.Notify(sigchan, syscall.SIGINT, syscall.SIGTERM)
@@ -31,7 +27,6 @@ func Consumer(topics []string) {
 	if err != nil {
 		fmt.Printf("Failed to create consumer: %s", err)
 	}
-	// log.Printf("Created Consumer %v", c)
 	err = c.SubscribeTopics(topics, nil)
 	for {
 		select {
@@ -62,35 +57,16 @@ func Consumer(topics []string) {
 	}
 }
 func emitToRedis(topic string, value string) {
-	start := time.Now()
 	err := redis.SetRedisTopic(topic, value)
 	if err != nil {
 		log.Print(err)
-	} else {
-		end := time.Now()
-		duration := end.Sub(start)
-		log := zerolog.New(os.Stdout).With().
-			Timestamp().
-			Str("app", "KafRedigo").Dur("Duration", duration).
-			Logger()
-		log.Printf("Set %v topic in redis to '%v'", topic, value)
 	}
 }
 func readFromRedis(topic string) (string, error) {
-	startTime := time.Now()
 	result, err := redis.GetRedisTopic(topic)
 	if err != nil {
 		return "", err
 	}
-	endTime := time.Now()
-
-	diff := endTime.Sub(startTime)
-
-	log := zerolog.New(os.Stdout).With().Dur("Duration", diff).
-		Timestamp().
-		Str("app", "KafRedigo").
-		Logger()
-	log.Print("Read from Redis")
 	return result, nil
 }
 func reverseString(str string) (string, error) {
@@ -103,17 +79,7 @@ func reverseString(str string) (string, error) {
 	return result, nil
 }
 func produceOutboundTopic(str string) {
-	startTime := time.Now()
 	Produce("OutboundTopic", str)
-	endTime := time.Now()
-
-	diff := endTime.Sub(startTime)
-
-	log := zerolog.New(os.Stdout).With().Dur("Duration", diff).
-		Timestamp().
-		Str("app", "KafRedigo").
-		Logger()
-	log.Print("Produced to OutboundTopic Topic")
 }
 func saveRedisTriggerOutboundTopicKafka(topic string, value string) error {
 	// save topic to redis

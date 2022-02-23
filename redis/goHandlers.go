@@ -1,15 +1,17 @@
 package redis
 
 import (
-	"os"
+	"fmt"
 	"time"
 
 	"github.com/gomodule/redigo/redis"
-	"github.com/rs/zerolog"
+	"github.com/rs/zerolog/log"
 )
 
 func SetRedisTopic(topic string, message string) error {
-	startTime := time.Now()
+	start := time.Now()
+	myStart := fmt.Sprintf("%v", start)
+
 	conn := Pool.Get()
 	defer conn.Close()
 	key := topic
@@ -18,24 +20,30 @@ func SetRedisTopic(topic string, message string) error {
 	if err != nil {
 		return err
 	}
-	endTime := time.Now()
+	end := time.Now()
+	myEnd := fmt.Sprintf("%v", end)
+	duration := end.Sub(start)
+	myDuration := fmt.Sprintf("%v", duration)
 
-	diff := endTime.Sub(startTime)
-
-	log := zerolog.New(os.Stdout).With().Dur("Duration", diff).
-		Timestamp().
-		Str("app", "KafRedigo").
-		Logger()
-	log.Print("Read from Redis")
+	log.Log().Str("duration", myDuration).Str("start-time", myStart).Str("end-time", myEnd).Msg("*** SET-TOPIC-IN-REDIS ***")
 	return nil
 }
 
 func GetRedisTopic(topic string) (string, error) {
+	start := time.Now()
+	myStart := fmt.Sprintf("%v", start)
+
 	conn := Pool.Get()
 	defer conn.Close()
 	message, err := redis.String(conn.Do("GET", topic))
 	if err != nil {
 		return "", err
 	}
+	end := time.Now()
+	myEnd := fmt.Sprintf("%v", end)
+	duration := end.Sub(start)
+	myDuration := fmt.Sprintf("%v", duration)
+
+	log.Log().Str("duration", myDuration).Str("start-time", myStart).Str("end-time", myEnd).Msg("*** READ-TOPIC-FROM-REDIS ***")
 	return message, nil
 }

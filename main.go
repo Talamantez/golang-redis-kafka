@@ -7,7 +7,6 @@ import (
 	"video-feed/redis"
 
 	"github.com/gorilla/mux"
-	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 )
 
@@ -20,10 +19,8 @@ func launchServer() error {
 }
 
 func main() {
-	zerolog.TimeFieldFormat = zerolog.TimeFormatUnix
-
-	log.Info().Msg("Running App")
-	log.Info().Msg("Localhost Endpoint: {your port}/produce-to-incoming-topic?message={your message}")
+	log.Log().Msg("Running App")
+	log.Log().Msg("Localhost Endpoint: {your port}/produce-to-incoming-topic?message={your message}")
 
 	router := mux.NewRouter()
 
@@ -32,6 +29,7 @@ func main() {
 	http.Handle("/", router)
 
 	redis.Init()
+
 	go kafka.InitProducer()
 	go kafka.Consumer([]string{"InboundTopic", "OutboundTopic"})
 
