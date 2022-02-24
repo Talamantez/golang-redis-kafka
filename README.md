@@ -1,4 +1,4 @@
-# video-feed
+# golang-redis-kafka
 Integrated Go Application with a simple server that serves sample video data for starters in kafka-redis-go.  
 
 
