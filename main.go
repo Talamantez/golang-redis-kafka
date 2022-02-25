@@ -11,7 +11,7 @@ import (
 )
 
 func launchServer() error {
-	err := http.ListenAndServe(":4015", nil)
+	err := http.ListenAndServe(":4000", nil)
 	if err != nil {
 		fmt.Printf("Server error %v :", err)
 	}
@@ -19,8 +19,8 @@ func launchServer() error {
 }
 
 func main() {
-	log.Log().Msg("Running App")
-	log.Log().Msg("Localhost Endpoint: {your port}/produce-to-incoming-topic?message={your message}")
+	log.Log().Msg("App listening on port 4000")
+	// log.Log().Msg("Localhost Endpoint: {your port}/produce-to-incoming-topic?message={your message}")
 
 	router := mux.NewRouter()
 
