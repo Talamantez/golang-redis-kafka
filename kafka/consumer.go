@@ -3,10 +3,10 @@ package kafka
 import "C"
 import (
 	"fmt"
+	"main/redis"
 	"os"
 	"os/signal"
 	"syscall"
-	"video-feed/redis"
 
 	"github.com/confluentinc/confluent-kafka-go/kafka"
 	"github.com/rs/zerolog/log"

@@ -2,8 +2,8 @@ package main
 
 import (
 	"fmt"
+	"main/kafka"
 	"net/http"
-	"video-feed/kafka"
 )
 
 func ProduceToIncomingTopic(w http.ResponseWriter, r *http.Request) {

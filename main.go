@@ -2,9 +2,9 @@ package main
 
 import (
 	"fmt"
+	"main/kafka"
+	"main/redis"
 	"net/http"
-	"video-feed/kafka"
-	"video-feed/redis"
 
 	"github.com/gorilla/mux"
 	"github.com/rs/zerolog/log"
