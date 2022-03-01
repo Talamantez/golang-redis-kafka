@@ -1,5 +1,5 @@
 # golang-redis-kafka
-Integrated Go Application with a simple server that serves sample video data for starters in kafka-redis-go.  
+Integrated Go Application that allows the user to manage Kafka Producers, Consumers, and Topics. Topic data is cached in Redis. Fork of praguna/video-feed. 
 
 
 ### To Run
