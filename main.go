@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"os"
 	"main/kafka"
 	"main/redis"
 	"net/http"
@@ -20,11 +21,12 @@ func launchServer() error {
 }
 
 func main() {
-	log.Log().Msg("Localhost Endpoint: {your port}/produce-to-incoming-topic?message={your message}")
 	err := godotenv.Load(".env")
 	if err != nil {
-		log.Log().Msg("Error loading .env file")
-	  }
+		log.Error().Msg("Error loading .env file - See README.md for Environment Variables")
+		os.Exit(1)
+	}
+	log.Log().Msg("Localhost Endpoint: {your port}/produce-to-incoming-topic?message={your message}")
 	router := mux.NewRouter()
 
 	router.HandleFunc("/produce-to-incoming-topic", ProduceToIncomingTopic)
