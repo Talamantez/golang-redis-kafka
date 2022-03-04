@@ -5,13 +5,14 @@ import (
 	"main/kafka"
 	"main/redis"
 	"net/http"
+	"github.com/joho/godotenv"
 
 	"github.com/gorilla/mux"
 	"github.com/rs/zerolog/log"
 )
 
 func launchServer() error {
-	err := http.ListenAndServe(":4000", nil)
+	err := http.ListenAndServe(":8080", nil)
 	if err != nil {
 		fmt.Printf("Server error %v :", err)
 	}
@@ -19,9 +20,11 @@ func launchServer() error {
 }
 
 func main() {
-	log.Log().Msg("App listening on port 4000")
-	// log.Log().Msg("Localhost Endpoint: {your port}/produce-to-incoming-topic?message={your message}")
-
+	log.Log().Msg("Localhost Endpoint: {your port}/produce-to-incoming-topic?message={your message}")
+	err := godotenv.Load(".env")
+	if err != nil {
+		log.Log().Msg("Error loading .env file")
+	  }
 	router := mux.NewRouter()
 
 	router.HandleFunc("/produce-to-incoming-topic", ProduceToIncomingTopic)

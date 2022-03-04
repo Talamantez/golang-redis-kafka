@@ -1,6 +1,8 @@
 # golang-redis-kafka
 Integrated Go Application that allows the user to manage Kafka Producers, Consumers, and Topics. Topic data is cached in Redis. Fork of praguna/video-feed. 
 
+### Run the Client Container
+```docker run rtalamantez/kafredigo```
 
 ### To Run
 * Follow  https://kafka.apache.org/documentation/ to setup a kafka cluster

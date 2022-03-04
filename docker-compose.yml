@@ -13,5 +13,4 @@ services:
       dockerfile: Dockerfile
     ports:
       - "8080:8080" # Forward the exposed port 8080 on the container to port 8080 on the host machine
-      - "4000:4000" # Forward the exposed port 4000 on the container to port 4000 on the host machine
     restart: unless-stopped

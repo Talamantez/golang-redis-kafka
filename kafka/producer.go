@@ -3,6 +3,7 @@ package kafka
 import (
 	"fmt"
 	"time"
+	"os"
 
 	"github.com/confluentinc/confluent-kafka-go/kafka"
 	"github.com/rs/zerolog/log"
@@ -12,7 +13,7 @@ var producer *kafka.Producer
 
 func InitProducer() {
 
-	broker := "localhost:9092"
+	broker := os.Getenv("PRODUCER")
 
 	var err error
 	producer, err = kafka.NewProducer(&kafka.ConfigMap{"bootstrap.servers": broker})

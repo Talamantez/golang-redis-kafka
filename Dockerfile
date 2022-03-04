@@ -24,6 +24,6 @@ FROM scratch AS runner
 
 COPY --from=builder /go/src/main /
 
-EXPOSE 4000
+EXPOSE 8080
 
 ENTRYPOINT ["./main"]
