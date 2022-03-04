@@ -16,7 +16,7 @@ func Consumer(topics []string) {
 	group := "InboundTopic"
 	sigchan := make(chan os.Signal, 1)
 	signal.Notify(sigchan, syscall.SIGINT, syscall.SIGTERM)
-	broker := "localhost:9092,localhost:9093"
+	broker := os.Getenv("CONSUMER")
 	c, err := kafka.NewConsumer(&kafka.ConfigMap{
 		"bootstrap.servers":               broker,
 		"group.id":                        group,
