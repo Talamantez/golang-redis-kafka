@@ -69,6 +69,7 @@ func readFromRedis(topic string) (string, error) {
 	}
 	return result, nil
 }
+// TODO: Replace 'reverseString' with Damian's Calculation
 func reverseString(str string) (string, error) {
 	rune_arr := []rune(str)
 	var rev []rune
