@@ -2,15 +2,17 @@ package redis
 
 import (
 	"fmt"
+	"io"
+	"os"
+	"strings"
 	"time"
 
 	"github.com/gomodule/redigo/redis"
-	"github.com/rs/zerolog/log"
+	log "github.com/sirupsen/logrus"
 )
 
 func SetRedisTopic(topic string, message string) error {
 	start := time.Now()
-	myStart := fmt.Sprintf("%v", start)
 
 	conn := Pool.Get()
 	defer conn.Close()
@@ -21,17 +23,40 @@ func SetRedisTopic(topic string, message string) error {
 		return err
 	}
 	end := time.Now()
-	myEnd := fmt.Sprintf("%v", end)
 	duration := end.Sub(start)
-	myDuration := fmt.Sprintf("%v", duration)
+	isInMicroseconds := strings.Contains(duration.String(), "\u00B5")
 
-	log.Log().Str("duration", myDuration).Str("start-time", myStart).Str("end-time", myEnd).Msg("*** SET-TOPIC-IN-REDIS ***")
+	myDuration := duration.String()[:len(duration.String())-2]
+	log.SetFormatter(&log.JSONFormatter{})
+	// If the file doesn't exist, create it or append to the file
+	file, err := os.OpenFile("logs.json", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0666)
+	if err != nil {
+		log.Fatal(err)
+	}
+	mw := io.MultiWriter(os.Stdout, file)
+	log.SetOutput(mw)
+	var n int32
+	fmt.Sscan(myDuration, &n)
+	fmt.Println("\n")
+	fmt.Println(n == 100)
+	if isInMicroseconds {
+		log.WithFields(
+			log.Fields{
+				"SetTopicInRedis": n / 1000,
+			},
+		).Println("Converted microseconds to milliseconds")
+	} else {
+		log.WithFields(
+			log.Fields{
+				"SetTopicInRedis": n,
+			},
+		).Println("")
+	}
 	return nil
 }
 
 func GetRedisTopic(topic string) (string, error) {
 	start := time.Now()
-	myStart := fmt.Sprintf("%v", start)
 
 	conn := Pool.Get()
 	defer conn.Close()
@@ -40,10 +65,35 @@ func GetRedisTopic(topic string) (string, error) {
 		return "", err
 	}
 	end := time.Now()
-	myEnd := fmt.Sprintf("%v", end)
 	duration := end.Sub(start)
-	myDuration := fmt.Sprintf("%v", duration)
+	isInMicroseconds := strings.Contains(duration.String(), "\u00B5")
 
-	log.Log().Str("duration", myDuration).Str("start-time", myStart).Str("end-time", myEnd).Msg("*** READ-TOPIC-FROM-REDIS ***")
+	myDuration := duration.String()[:len(duration.String())-2]
+	log.SetFormatter(&log.JSONFormatter{})
+	// If the file doesn't exist, create it or append to the file
+	file, err := os.OpenFile("logs.json", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0666)
+	if err != nil {
+		log.Fatal(err)
+	}
+	mw := io.MultiWriter(os.Stdout, file)
+	log.SetOutput(mw)
+	var n int32
+	fmt.Sscan(myDuration, &n)
+	fmt.Println("\n********* ")
+	fmt.Println(n == 100)
+	if isInMicroseconds {
+		log.WithFields(
+			log.Fields{
+				"ReadTopicFromRedis": n / 1000,
+			},
+		).Println("Converted microseconds to milliseconds")
+	} else {
+		log.WithFields(
+			log.Fields{
+				"ReadTopicFromRedis": n,
+			},
+		).Println("")
+	}
+
 	return message, nil
 }
