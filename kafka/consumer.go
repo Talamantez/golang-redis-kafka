@@ -2,16 +2,26 @@ package kafka
 
 import "C"
 import (
+	"bufio"
+	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"main/redis"
 	"os"
 	"os/signal"
+	"strings"
 	"syscall"
+	"time"
 
 	"github.com/confluentinc/confluent-kafka-go/kafka"
 	"github.com/rs/zerolog/log"
 )
+
+type Report struct {
+	SetTopicInRedis      int32     `json:"setTopicInRedis"`
+	ReadTopicFromRedis   int32     `json:"readTopicFromRedis"`
+	ProducedTopicToKafka int32     `json:"producedTopicToKafka"`
+	LoggedAt             time.Time `json:"loggedAt"`
+}
 
 func Consumer(topics []string) {
 	group := "InboundTopic"
@@ -91,26 +101,97 @@ func produceOutboundTopic(str string) {
 
 func produceTelemetry() {
 	// Read the log file
-	f, err := ioutil.ReadFile("log.txt")
+	file, err := os.Open("log.txt")
 	if err != nil {
-		// log.Fatalf("unable to read file: %v", err)
 		log.Fatal()
+
 	}
-	// buf := make([]byte, 1024)
-	// for {
-	// 	n, err := f.Read(buf)
-	// 	if err == io.EOF {
-	// 		break
-	// 	}
-	// 	if err != nil {
-	// 		fmt.Println(err)
-	// 		continue
-	// 	}
-	// 	if n > 0 {
-	// 		fmt.Println(string(buf[:n]))
-	// 	}
-	// }
-	Produce("TelemetryTopic", string(f))
+	scanner := bufio.NewScanner(file)
+	scanner.Split(bufio.ScanLines)
+	var text []string
+
+	for scanner.Scan() {
+		text = append(text, scanner.Text())
+	}
+	file.Close()
+
+	p := Report{}
+
+	type KafkaUpdate struct {
+		ProducedTopicToKafka int32
+	}
+	type RedisSet struct {
+		SetTopicInRedis int32
+	}
+	type RedisGet struct {
+		ReadTopicFromRedis int32
+	}
+
+	var kafkaUpdate KafkaUpdate
+	var redisSet RedisSet
+	var redisGet RedisGet
+	for _, each_ln := range text {
+		if strings.Contains(each_ln, "ProducedTopicToKafka") {
+			err := json.Unmarshal([]byte(each_ln), &kafkaUpdate)
+			if err != nil {
+				fmt.Println(err)
+			}
+			p.SetProducedToKafka(kafkaUpdate.ProducedTopicToKafka)
+			fmt.Printf("It took %dms to produce to Kafka. \n", kafkaUpdate.ProducedTopicToKafka)
+			fmt.Println(p.ProducedTopicToKafka)
+		} else if strings.Contains(each_ln, "SetTopicInRedis") {
+			err := json.Unmarshal([]byte(each_ln), &redisSet)
+			if err != nil {
+				fmt.Println(err)
+			}
+			p.SavedToRedis(redisSet.SetTopicInRedis)
+			fmt.Printf("It took %dms to save to Redis. \n", redisSet.SetTopicInRedis)
+			fmt.Println(p.SetTopicInRedis)
+		} else if strings.Contains(each_ln, "ReadTopicFromRedis") {
+			err := json.Unmarshal([]byte(each_ln), &redisSet)
+			if err != nil {
+				fmt.Println(err)
+			}
+			p.ReadFromRedis(redisGet.ReadTopicFromRedis)
+			fmt.Printf("It took %dms to read from Redis. \n", redisGet.ReadTopicFromRedis)
+			fmt.Println(p.ReadTopicFromRedis)
+		}
+	}
+	bytes, _ := json.Marshal(p)
+	fmt.Println(string(bytes))
+
+	// Write the log to the topic
+	Produce("TelemetryTopic", string(bytes))
+}
+
+// SetProducedToKafka receives a pointer to Report so it can modify it.
+func (f *Report) SetProducedToKafka(val int32) {
+	f.ProducedTopicToKafka = val
+}
+
+// ProducedToKafka receives a copy of Report since it doesn't need to modify it.
+func (f Report) ProducedToKafka() int32 {
+	return f.ProducedTopicToKafka
+}
+
+// Set receives a pointer to Report so it can modify it.
+func (f *Report) SavedToRedis(val int32) {
+	f.SetTopicInRedis = val
+}
+
+// SeeSetTopicInRedis receives a copy of Report since it doesn't need to modify it.
+func (f Report) SeeSetTopicInRedis() int32 {
+	return f.SetTopicInRedis
+}
+
+// Set receives a pointer to Report so it can modify it.
+func (f *Report) ReadFromRedis(val int32) {
+	f.SetTopicInRedis = val
+}
+
+// SeeReadTopicFromRedis receives a copy of Report since it doesn't need to modify it.
+func (f Report) SeeReadTopicFromRedis() int32 {
+	return f.SetTopicInRedis
 }
 
 func saveRedisTriggerOutboundTopicKafka(topic string, value string) error {

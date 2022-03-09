@@ -52,7 +52,7 @@ func Produce(topic string, value string) {
 		// by checking for the 'mu' special character '\u00B5'
 		isInMicroseconds := strings.Contains(duration.String(), "\u00B5")
 
-		// strip the unit
+		// remove the unit from the number
 		myDuration := duration.String()[:len(duration.String())-2]
 
 		log.SetFormatter(&log.JSONFormatter{})

@@ -7,7 +7,6 @@ import (
 	"main/redis"
 	"net/http"
 	"os"
-	"time"
 
 	"github.com/joho/godotenv"
 
@@ -21,13 +20,6 @@ import (
 // "ReadTopicFromRedis": "60",
 // "ProducedTopicToKafka": "100"
 // }
-
-type Report struct {
-	SetTopicInRedis      int32
-	ReadTopicFromRedis   int32
-	ProducedTopicToKafka int32
-	LoggedAt             time.Time
-}
 
 func launchServer() error {
 	err := http.ListenAndServe(":8080", nil)
@@ -45,8 +37,8 @@ func main() {
 	log.SetFormatter(&log.JSONFormatter{})
 
 	// Over-write log file if it exists, otherwise create the file
-	file, err := os.OpenFile("log.txt", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0666)
-	// file, err := os.OpenFile("log.txt", os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0755)
+	// file, err := os.OpenFile("log.txt", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0666)
+	file, err := os.OpenFile("log.txt", os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0755)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -65,5 +57,4 @@ func main() {
 	go kafka.Consumer([]string{"InboundTopic", "OutboundTopic", "TelemetryTopic"})
 
 	launchServer()
-
 }
