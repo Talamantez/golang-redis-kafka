@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"io"
 	"main/kafka"
 	"main/redis"
 	"net/http"
@@ -32,18 +31,10 @@ func launchServer() error {
 func main() {
 	err := godotenv.Load(".env")
 	if err != nil {
+		fmt.Printf("Error reading env file: %s", err)
 		os.Exit(1)
 	}
 	log.SetFormatter(&log.JSONFormatter{})
-
-	// Over-write log file if it exists, otherwise create the file
-	// file, err := os.OpenFile("log.txt", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0666)
-	file, err := os.OpenFile("log.txt", os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0755)
-	if err != nil {
-		log.Fatal(err)
-	}
-	mw := io.MultiWriter(os.Stdout, file)
-	log.SetOutput(mw)
 
 	router := mux.NewRouter()
 
