@@ -17,10 +17,10 @@ import (
 )
 
 type Report struct {
-	SetTopicInRedis      int32     `json:"setTopicInRedis"`
-	ReadTopicFromRedis   int32     `json:"readTopicFromRedis"`
-	ProducedTopicToKafka int32     `json:"producedTopicToKafka"`
-	LoggedAt             time.Time `json:"loggedAt"`
+	SetTopicInRedis      int32     `json:"SetTopicInRedis"`
+	ReadTopicFromRedis   int32     `json:"ReadTopicFromRedis"`
+	ProducedTopicToKafka int32     `json:"ProducedTopicToKafka"`
+	LoggedAt             time.Time `json:"LoggedAt"`
 }
 type KafkaUpdate struct {
 	ProducedTopicToKafka int32
@@ -37,12 +37,25 @@ func Consumer(topics []string) {
 	sigchan := make(chan os.Signal, 1)
 	signal.Notify(sigchan, syscall.SIGINT, syscall.SIGTERM)
 	broker := os.Getenv("CONSUMER")
+	sslCaLocation := os.Getenv("SSL_CA_LOCATION")
+	securityProtocol := os.Getenv("SECURITY_PROTOCOL")
+	fmt.Println(sslCaLocation)
+	saslMechanism := os.Getenv("SASL_MECHANISM")
+	enableAutoCommit := os.Getenv("ENABLE_AUTO_COMMIT")
+	autoCommitIntervalMs := os.Getenv("AUTO_COMMIT_INTERVAL_MS")
+	autoOffsetReset := os.Getenv("AUTO_OFFSET_RESET")
 	c, err := kafka.NewConsumer(&kafka.ConfigMap{
 		"bootstrap.servers":               broker,
 		"group.id":                        group,
 		"session.timeout.ms":              6000,
 		"go.events.channel.enable":        true,
 		"go.application.rebalance.enable": true,
+		"ssl.ca.location":                 sslCaLocation,
+		"security.protocol":               securityProtocol,
+		"sasl.mechanism":                  saslMechanism,
+		"enable.auto.commit":              enableAutoCommit,
+		"auto.commit.interval.ms":         autoCommitIntervalMs,
+		"auto.offset.reset":               autoOffsetReset,
 	})
 	if err != nil {
 		fmt.Printf("Failed to create consumer: %s", err)
