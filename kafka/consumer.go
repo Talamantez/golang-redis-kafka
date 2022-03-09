@@ -3,6 +3,7 @@ package kafka
 import "C"
 import (
 	"fmt"
+	"io/ioutil"
 	"main/redis"
 	"os"
 	"os/signal"
@@ -28,6 +29,7 @@ func Consumer(topics []string) {
 		fmt.Printf("Failed to create consumer: %s", err)
 	}
 	err = c.SubscribeTopics(topics, nil)
+
 	for {
 		select {
 		case sig := <-sigchan:
@@ -45,8 +47,11 @@ func Consumer(topics []string) {
 				myTopic := *e.TopicPartition.Topic
 				if myTopic == "InboundTopic" {
 					saveRedisTriggerOutboundTopicKafka(*e.TopicPartition.Topic, string(e.Value))
-				} else {
-					emitToRedis(*e.TopicPartition.Topic, string(e.Value))
+				} else if myTopic == "OutboundTopic" {
+					// If the outbound topic has been
+					// updated, then it's time to emit
+					// the telemetry
+					produceTelemetry()
 				}
 			case kafka.PartitionEOF:
 				log.Printf("%% Reached %v", e)
@@ -83,6 +88,31 @@ func reverseString(str string) (string, error) {
 func produceOutboundTopic(str string) {
 	Produce("OutboundTopic", str)
 }
+
+func produceTelemetry() {
+	// Read the log file
+	f, err := ioutil.ReadFile("log.txt")
+	if err != nil {
+		// log.Fatalf("unable to read file: %v", err)
+		log.Fatal()
+	}
+	// buf := make([]byte, 1024)
+	// for {
+	// 	n, err := f.Read(buf)
+	// 	if err == io.EOF {
+	// 		break
+	// 	}
+	// 	if err != nil {
+	// 		fmt.Println(err)
+	// 		continue
+	// 	}
+	// 	if n > 0 {
+	// 		fmt.Println(string(buf[:n]))
+	// 	}
+	// }
+	Produce("TelemetryTopic", string(f))
+}
+
 func saveRedisTriggerOutboundTopicKafka(topic string, value string) error {
 	// save topic to redis
 	emitToRedis(topic, value)

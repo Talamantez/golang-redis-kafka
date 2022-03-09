@@ -7,6 +7,7 @@ import (
 	"main/redis"
 	"net/http"
 	"os"
+	"time"
 
 	"github.com/joho/godotenv"
 
@@ -15,12 +16,18 @@ import (
 )
 
 // Log format:
-// [11:58 AM] Hung Duong
 // {
 // "SetTopicInRedis": "20",
 // "ReadTopicFromRedis": "60",
 // "ProducedTopicToKafka": "100"
 // }
+
+type Report struct {
+	SetTopicInRedis      int32
+	ReadTopicFromRedis   int32
+	ProducedTopicToKafka int32
+	LoggedAt             time.Time
+}
 
 func launchServer() error {
 	err := http.ListenAndServe(":8080", nil)
@@ -36,8 +43,10 @@ func main() {
 		os.Exit(1)
 	}
 	log.SetFormatter(&log.JSONFormatter{})
-	// If the file doesn't exist, create it or append to the file
-	file, err := os.OpenFile("logs.json", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0666)
+
+	// Over-write log file if it exists, otherwise create the file
+	file, err := os.OpenFile("log.txt", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0666)
+	// file, err := os.OpenFile("log.txt", os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0755)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -53,7 +62,7 @@ func main() {
 	redis.Init()
 
 	go kafka.InitProducer()
-	go kafka.Consumer([]string{"InboundTopic", "OutboundTopic"})
+	go kafka.Consumer([]string{"InboundTopic", "OutboundTopic", "TelemetryTopic"})
 
 	launchServer()
 

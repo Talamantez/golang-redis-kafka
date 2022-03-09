@@ -34,7 +34,7 @@ func Produce(topic string, value string) {
 	err := producer.Produce(&kafka.Message{
 		TopicPartition: kafka.TopicPartition{Topic: &topic, Partition: kafka.PartitionAny},
 		Value:          []byte(value),
-		Headers:        []kafka.Header{{Key: "InboundTopic", Value: []byte("InboundTopic feed header value")}},
+		Headers:        []kafka.Header{{Key: "Producer", Value: []byte("Producer")}},
 	}, deliveryChan)
 
 	e := <-deliveryChan
@@ -46,7 +46,10 @@ func Produce(topic string, value string) {
 	} else {
 		end := time.Now()
 		duration := end.Sub(start)
-		// If duration is in microseconds, convert to milliseconds
+
+		// We want to convert microseconds to milliseconds,
+		// so first check if the duration is in milliseconds
+		// by checking for the 'mu' special character '\u00B5'
 		isInMicroseconds := strings.Contains(duration.String(), "\u00B5")
 
 		// strip the unit
@@ -54,7 +57,7 @@ func Produce(topic string, value string) {
 
 		log.SetFormatter(&log.JSONFormatter{})
 		// If the file doesn't exist, create it or append to the file
-		file, err := os.OpenFile("logs.json", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0666)
+		file, err := os.OpenFile("log.txt", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0666)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -62,8 +65,6 @@ func Produce(topic string, value string) {
 		log.SetOutput(mw)
 		var n int32
 		fmt.Sscan(myDuration, &n)
-		fmt.Println("\n")
-		fmt.Println(n == 100)
 		if isInMicroseconds {
 			log.WithFields(
 				log.Fields{

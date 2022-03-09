@@ -29,7 +29,7 @@ func SetRedisTopic(topic string, message string) error {
 	myDuration := duration.String()[:len(duration.String())-2]
 	log.SetFormatter(&log.JSONFormatter{})
 	// If the file doesn't exist, create it or append to the file
-	file, err := os.OpenFile("logs.json", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0666)
+	file, err := os.OpenFile("log.txt", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0666)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -37,8 +37,6 @@ func SetRedisTopic(topic string, message string) error {
 	log.SetOutput(mw)
 	var n int32
 	fmt.Sscan(myDuration, &n)
-	fmt.Println("\n")
-	fmt.Println(n == 100)
 	if isInMicroseconds {
 		log.WithFields(
 			log.Fields{
@@ -71,7 +69,7 @@ func GetRedisTopic(topic string) (string, error) {
 	myDuration := duration.String()[:len(duration.String())-2]
 	log.SetFormatter(&log.JSONFormatter{})
 	// If the file doesn't exist, create it or append to the file
-	file, err := os.OpenFile("logs.json", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0666)
+	file, err := os.OpenFile("log.txt", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0666)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -79,8 +77,6 @@ func GetRedisTopic(topic string) (string, error) {
 	log.SetOutput(mw)
 	var n int32
 	fmt.Sscan(myDuration, &n)
-	fmt.Println("\n********* ")
-	fmt.Println(n == 100)
 	if isInMicroseconds {
 		log.WithFields(
 			log.Fields{
