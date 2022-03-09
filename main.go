@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"io"
 	"main/kafka"
 	"main/redis"
 	"net/http"
@@ -36,14 +35,14 @@ func main() {
 	}
 	log.SetFormatter(&log.JSONFormatter{})
 
-	// Over-write log file if it exists, otherwise create the file
+	// // Over-write log file if it exists, otherwise create the file
 	// file, err := os.OpenFile("log.txt", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0666)
-	file, err := os.OpenFile("log.txt", os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0755)
-	if err != nil {
-		log.Fatal(err)
-	}
-	mw := io.MultiWriter(os.Stdout, file)
-	log.SetOutput(mw)
+	// // file, err := os.OpenFile("log.txt", os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0755)
+	// if err != nil {
+	// 	log.Fatal(err)
+	// }
+	// mw := io.MultiWriter(os.Stdout, file)
+	// log.SetOutput(mw)
 
 	router := mux.NewRouter()
 
