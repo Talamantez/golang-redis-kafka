@@ -4,3 +4,4 @@ vendor/*
 *.txt
 log.json
 *.jks
+main

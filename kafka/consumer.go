@@ -17,10 +17,19 @@ import (
 )
 
 type Report struct {
-	SetTopicInRedis      int32     `json:"setTopicInRedis"`
-	ReadTopicFromRedis   int32     `json:"readTopicFromRedis"`
-	ProducedTopicToKafka int32     `json:"producedTopicToKafka"`
-	LoggedAt             time.Time `json:"loggedAt"`
+	SetTopicInRedis      int32     `json:"SetTopicInRedis"`
+	ReadTopicFromRedis   int32     `json:"ReadTopicFromRedis"`
+	ProducedTopicToKafka int32     `json:"ProducedTopicToKafka"`
+	LoggedAt             time.Time `json:"LoggedAt"`
+}
+type KafkaUpdate struct {
+	ProducedTopicToKafka int32
+}
+type RedisSet struct {
+	SetTopicInRedis int32
+}
+type RedisGet struct {
+	ReadTopicFromRedis int32
 }
 
 func Consumer(topics []string) {
@@ -28,12 +37,24 @@ func Consumer(topics []string) {
 	sigchan := make(chan os.Signal, 1)
 	signal.Notify(sigchan, syscall.SIGINT, syscall.SIGTERM)
 	broker := os.Getenv("CONSUMER")
+	sslCaLocation := os.Getenv("SSL_CA_LOCATION")
+	securityProtocol := os.Getenv("SECURITY_PROTOCOL")
+	saslMechanism := os.Getenv("SASL_MECHANISM")
+	enableAutoCommit := os.Getenv("ENABLE_AUTO_COMMIT")
+	autoCommitIntervalMs := os.Getenv("AUTO_COMMIT_INTERVAL_MS")
+	autoOffsetReset := os.Getenv("AUTO_OFFSET_RESET")
 	c, err := kafka.NewConsumer(&kafka.ConfigMap{
 		"bootstrap.servers":               broker,
 		"group.id":                        group,
 		"session.timeout.ms":              6000,
 		"go.events.channel.enable":        true,
 		"go.application.rebalance.enable": true,
+		"ssl.ca.location":                 sslCaLocation,
+		"security.protocol":               securityProtocol,
+		"sasl.mechanism":                  saslMechanism,
+		"enable.auto.commit":              enableAutoCommit,
+		"auto.commit.interval.ms":         autoCommitIntervalMs,
+		"auto.offset.reset":               autoOffsetReset,
 	})
 	if err != nil {
 		fmt.Printf("Failed to create consumer: %s", err)
@@ -56,6 +77,9 @@ func Consumer(topics []string) {
 			case *kafka.Message:
 				myTopic := *e.TopicPartition.Topic
 				if myTopic == "InboundTopic" {
+					// When the inbound topic updates,
+					// we update Redis, perform business logic,
+					// and produce those results to the outbound topic
 					saveRedisTriggerOutboundTopicKafka(*e.TopicPartition.Topic, string(e.Value))
 				} else if myTopic == "OutboundTopic" {
 					// If the outbound topic has been
@@ -113,20 +137,12 @@ func produceTelemetry() {
 	for scanner.Scan() {
 		text = append(text, scanner.Text())
 	}
+	// Close the file
 	file.Close()
+	// Remove the file after this routine runs
+	defer os.Remove("log.txt")
 
 	p := Report{}
-
-	type KafkaUpdate struct {
-		ProducedTopicToKafka int32
-	}
-	type RedisSet struct {
-		SetTopicInRedis int32
-	}
-	type RedisGet struct {
-		ReadTopicFromRedis int32
-	}
-
 	var kafkaUpdate KafkaUpdate
 	var redisSet RedisSet
 	var redisGet RedisGet
@@ -137,61 +153,47 @@ func produceTelemetry() {
 				fmt.Println(err)
 			}
 			p.SetProducedToKafka(kafkaUpdate.ProducedTopicToKafka)
-			fmt.Printf("It took %dms to produce to Kafka. \n", kafkaUpdate.ProducedTopicToKafka)
-			fmt.Println(p.ProducedTopicToKafka)
 		} else if strings.Contains(each_ln, "SetTopicInRedis") {
 			err := json.Unmarshal([]byte(each_ln), &redisSet)
 			if err != nil {
 				fmt.Println(err)
 			}
 			p.SavedToRedis(redisSet.SetTopicInRedis)
-			fmt.Printf("It took %dms to save to Redis. \n", redisSet.SetTopicInRedis)
-			fmt.Println(p.SetTopicInRedis)
 		} else if strings.Contains(each_ln, "ReadTopicFromRedis") {
 			err := json.Unmarshal([]byte(each_ln), &redisSet)
 			if err != nil {
 				fmt.Println(err)
 			}
 			p.ReadFromRedis(redisGet.ReadTopicFromRedis)
-			fmt.Printf("It took %dms to read from Redis. \n", redisGet.ReadTopicFromRedis)
-			fmt.Println(p.ReadTopicFromRedis)
 		}
 	}
+	p.SetTime(time.Now())
 	bytes, _ := json.Marshal(p)
-	fmt.Println(string(bytes))
 
 	// Write the log to the topic
 	Produce("TelemetryTopic", string(bytes))
 }
 
-// SetProducedToKafka receives a pointer to Report so it can modify it.
 func (f *Report) SetProducedToKafka(val int32) {
 	f.ProducedTopicToKafka = val
 }
 
-// ProducedToKafka receives a copy of Report since it doesn't need to modify it.
-func (f Report) ProducedToKafka() int32 {
-	return f.ProducedTopicToKafka
-}
-
-// Set receives a pointer to Report so it can modify it.
 func (f *Report) SavedToRedis(val int32) {
 	f.SetTopicInRedis = val
 }
 
-// SeeSetTopicInRedis receives a copy of Report since it doesn't need to modify it.
-func (f Report) SeeSetTopicInRedis() int32 {
-	return f.SetTopicInRedis
-}
-
-// Set receives a pointer to Report so it can modify it.
 func (f *Report) ReadFromRedis(val int32) {
 	f.SetTopicInRedis = val
 }
 
+// Set receives a pointer to Report so it can modify it.
+func (f *Report) SetTime(time time.Time) {
+	f.LoggedAt = time
+}
+
 // SeeReadTopicFromRedis receives a copy of Report since it doesn't need to modify it.
-func (f Report) SeeReadTopicFromRedis() int32 {
-	return f.SetTopicInRedis
+func (f Report) SeeLoggedAt() time.Time {
+	return f.LoggedAt
 }
 
 func saveRedisTriggerOutboundTopicKafka(topic string, value string) error {
